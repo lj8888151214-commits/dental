@@ -1,0 +1,34 @@
+name: Deploy to AWS EC2
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Deploy to EC2 via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd ~/dental-project
+            if [ ! -d ".git" ]; then
+              git clone https://github.com/${{ github.repository }}.git .
+            else
+              git pull origin main
+            fi
+
+            echo "WP_URL=${{ secrets.WP_URL }}" > .env
+            echo "WP_USER=${{ secrets.WP_USER }}" >> .env
+            echo "WP_APP_PASSWORD=${{ secrets.WP_APP_PASSWORD }}" >> .env
+
+            docker compose down
+            docker compose up --build -d

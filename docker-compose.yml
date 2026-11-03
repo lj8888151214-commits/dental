@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: dental_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: dbuser
+      POSTGRES_PASSWORD: dbpassword
+      POSTGRES_DB: dentaldb
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  app:
+    build: .
+    container_name: dental_fastapi_app
+    restart: always
+    depends_on:
+      - db
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://dbuser:dbpassword@db:5432/dentaldb
+      - WP_URL=${WP_URL}
+      - WP_USER=${WP_USER}
+      - WP_APP_PASSWORD=${WP_APP_PASSWORD}
+
+volumes:
+  postgres_data:
